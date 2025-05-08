@@ -122,18 +122,18 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
             `state=${state}`;
           break;
 
-        case 'instagram':
-          if (!import.meta.env.VITE_INSTAGRAM_CLIENT_ID) {
-            throw new Error('Instagram Client ID not configured');
-          }
-          const igScope = 'instagram_basic,instagram_content_publish';
-          authUrl = `https://api.instagram.com/oauth/authorize?` +
-            `client_id=${import.meta.env.VITE_INSTAGRAM_CLIENT_ID}&` +
-            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-            `scope=${encodeURIComponent(igScope)}&` +
-            `response_type=code&` +
-            `state=${state}`;
-          break;
+          case 'instagram':
+            if (!import.meta.env.VITE_INSTAGRAM_CLIENT_ID) {
+              throw new Error('Instagram Client ID not configured');
+            }
+            const igScope = 'instagram_basic,instagram_content_publish';
+            authUrl = `https://api.instagram.com/oauth/authorize?` +
+              `app_id=${import.meta.env.VITE_INSTAGRAM_CLIENT_ID}&` +
+              `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+              `scope=${encodeURIComponent(igScope)}&` +
+              `response_type=code&` +
+              `state=${state}`;
+            break;          
 
         case 'youtube':
           if (!import.meta.env.VITE_YOUTUBE_CLIENT_ID) {
