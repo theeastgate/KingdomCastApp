@@ -122,19 +122,28 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
             `state=${state}`;
           break;
 
+        case 'instagram':
+          if (!import.meta.env.VITE_INSTAGRAM_CLIENT_ID) {
+            throw new Error('Instagram Client ID not configured');
+          }
+          const igScope = 'instagram_basic,instagram_content_publish';
+          authUrl = `https://api.instagram.com/oauth/authorize?` +
+            `client_id=${import.meta.env.VITE_INSTAGRAM_CLIENT_ID}&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `scope=${encodeURIComponent(igScope)}&` +
+            `response_type=code&` +
+            `state=${state}`;
+          break;
+
         case 'youtube':
           if (!import.meta.env.VITE_YOUTUBE_CLIENT_ID) {
             throw new Error('YouTube Client ID not configured');
           }
-          // Updated YouTube scopes
           const ytScope = [
             'https://www.googleapis.com/auth/youtube',
             'https://www.googleapis.com/auth/youtube.upload',
             'https://www.googleapis.com/auth/youtube.readonly',
-            'https://www.googleapis.com/auth/youtube.force-ssl',
-            'https://www.googleapis.com/auth/youtube.channel-memberships.creator',
-            'https://www.googleapis.com/auth/youtubepartner',
-            'https://www.googleapis.com/auth/youtubepartner-channel-audit'
+            'https://www.googleapis.com/auth/youtube.force-ssl'
           ].join(' ');
           
           authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -151,13 +160,6 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
         default:
           throw new Error('Platform not supported yet');
       }
-
-      // Log the redirect URI for debugging
-      console.log(`Redirecting to: ${platform} OAuth`, {
-        redirectUri,
-        platform,
-        state
-      });
 
       window.location.href = authUrl;
     } catch (err: any) {

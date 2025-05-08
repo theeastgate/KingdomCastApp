@@ -9,6 +9,8 @@ const corsHeaders = {
 
 const FACEBOOK_APP_ID = Deno.env.get("FACEBOOK_APP_ID");
 const FACEBOOK_APP_SECRET = Deno.env.get("FACEBOOK_APP_SECRET");
+const INSTAGRAM_CLIENT_ID = Deno.env.get("INSTAGRAM_CLIENT_ID");
+const INSTAGRAM_CLIENT_SECRET = Deno.env.get("INSTAGRAM_CLIENT_SECRET");
 const YOUTUBE_CLIENT_ID = Deno.env.get("YOUTUBE_CLIENT_ID");
 const YOUTUBE_CLIENT_SECRET = Deno.env.get("YOUTUBE_CLIENT_SECRET");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -121,6 +123,60 @@ serve(async (req) => {
         }
 
         pages = fbPagesData.data;
+        break;
+
+      case "instagram-auth":
+        if (!INSTAGRAM_CLIENT_ID || !INSTAGRAM_CLIENT_SECRET) {
+          throw new Error("Missing Instagram credentials");
+        }
+
+        // Exchange code for access token
+        const igTokenResponse = await fetch(
+          "https://api.instagram.com/oauth/access_token",
+          {
+            method: "POST",
+            body: new URLSearchParams({
+              client_id: INSTAGRAM_CLIENT_ID,
+              client_secret: INSTAGRAM_CLIENT_SECRET,
+              grant_type: "authorization_code",
+              code,
+              redirect_uri: redirectUri,
+            }),
+          }
+        );
+
+        const igTokenData = await igTokenResponse.json();
+        if (!igTokenResponse.ok) {
+          throw new Error(igTokenData.error_message || "Failed to get Instagram access token");
+        }
+
+        // Get long-lived token
+        const igLongLivedTokenResponse = await fetch(
+          `https://graph.instagram.com/access_token?` +
+          `grant_type=ig_exchange_token&` +
+          `client_secret=${INSTAGRAM_CLIENT_SECRET}&` +
+          `access_token=${igTokenData.access_token}`
+        );
+
+        const igLongLivedTokenData = await igLongLivedTokenResponse.json();
+        if (!igLongLivedTokenResponse.ok) {
+          throw new Error("Failed to get long-lived Instagram access token");
+        }
+
+        accessToken = igLongLivedTokenData.access_token;
+        expiresAt = new Date(Date.now() + (igLongLivedTokenData.expires_in * 1000)).toISOString();
+
+        // Get user profile
+        const igProfileResponse = await fetch(
+          `https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`
+        );
+
+        const igProfileData = await igProfileResponse.json();
+        if (!igProfileResponse.ok) {
+          throw new Error("Failed to get Instagram profile");
+        }
+
+        pages = [{ id: igProfileData.id, username: igProfileData.username }];
         break;
 
       case "youtube-auth":
