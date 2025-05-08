@@ -7,6 +7,7 @@ import { useContentStore } from '../../store/contentStore';
 import { useAuthStore } from '../../store/authStore';
 import { postToSocialMedia } from '../../services/socialMediaService';
 import Button from '../../components/common/Button';
+import ChurchIdModal from '../../components/modals/ChurchIdModal';
 import { Upload, Calendar, Hash, X, Facebook, Instagram, Youtube, Radio } from 'lucide-react';
 import { Platform, ContentType } from '../../types';
 
@@ -24,13 +25,13 @@ const ContentUploader: React.FC = () => {
   const [scheduledFor, setScheduledFor] = useState<Date | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [showChurchIdModal, setShowChurchIdModal] = useState(false);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
       
-      // Auto-detect content type based on file
       if (selectedFile.type.startsWith('image/')) {
         setContentType('image');
       } else if (selectedFile.type.startsWith('video/')) {
@@ -63,6 +64,11 @@ const ContentUploader: React.FC = () => {
     
     if (!user) {
       toast.error('You must be logged in to create content');
+      return;
+    }
+
+    if (!user.church_id) {
+      setShowChurchIdModal(true);
       return;
     }
     
@@ -120,9 +126,22 @@ const ContentUploader: React.FC = () => {
       setIsPosting(false);
     }
   };
+
+  const handleChurchIdSuccess = () => {
+    setShowChurchIdModal(false);
+    // Refresh the page to get updated user data
+    window.location.reload();
+  };
   
   return (
     <div className="max-w-4xl mx-auto">
+      {showChurchIdModal && (
+        <ChurchIdModal
+          onClose={() => setShowChurchIdModal(false)}
+          onSuccess={handleChurchIdSuccess}
+        />
+      )}
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Upload Content</h1>
         <p className="text-gray-500 mt-1">Create and schedule new content for your social media platforms</p>

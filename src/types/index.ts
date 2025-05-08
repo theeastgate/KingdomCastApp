@@ -12,7 +12,7 @@ export interface User {
   firstname?: string;
   lastname?: string;
   role: Role;
-  churchId: string;
+  church_id: string;
   avatarUrl?: string;
   createdAt: string;
 }
