@@ -4,6 +4,8 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from 'react-hot-toast';
 import { useContentStore } from '../../store/contentStore';
+import { useAuthStore } from '../../store/authStore';
+import { postToSocialMedia } from '../../services/socialMediaService';
 import Button from '../../components/common/Button';
 import { Upload, Calendar, Hash, X, Facebook, Instagram, Youtube, Radio } from 'lucide-react';
 import { Platform, ContentType } from '../../types';
@@ -11,6 +13,7 @@ import { Platform, ContentType } from '../../types';
 const ContentUploader: React.FC = () => {
   const navigate = useNavigate();
   const { createContent, loading } = useContentStore();
+  const { user } = useAuthStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [contentType, setContentType] = useState<ContentType>('image');
@@ -20,6 +23,7 @@ const ContentUploader: React.FC = () => {
   const [currentHashtag, setCurrentHashtag] = useState('');
   const [scheduledFor, setScheduledFor] = useState<Date | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -57,6 +61,11 @@ const ContentUploader: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast.error('You must be logged in to create content');
+      return;
+    }
+    
     if (!title) {
       toast.error('Please enter a title for your content');
       return;
@@ -73,12 +82,13 @@ const ContentUploader: React.FC = () => {
     }
     
     try {
-      // In a real app, we would upload the file to storage and get the URL
-      // For this demo, we'll use a placeholder URL
+      setIsPosting(true);
+
+      // Upload file and get URL (mock for now)
       const mediaUrl = file ? 'https://example.com/media/placeholder.jpg' : undefined;
       
-      // Mock content creation
-      await createContent({
+      // Create content in database
+      const content = await createContent({
         title,
         description,
         contentType,
@@ -86,15 +96,28 @@ const ContentUploader: React.FC = () => {
         platforms,
         status: isScheduling ? 'scheduled' : 'draft',
         scheduledFor: scheduledFor ? scheduledFor.toISOString() : undefined,
-        authorId: 'current-user-id', // In a real app, this would come from auth
-        churchId: 'demo-church-id', // In a real app, this would come from the user's church
+        authorId: user.id,
+        churchId: user.church_id,
         hashtags,
       });
+
+      // If not scheduling, post immediately to social media
+      if (!isScheduling) {
+        await postToSocialMedia({
+          message: description || title,
+          mediaUrl,
+          platforms,
+          scheduledFor: scheduledFor?.toISOString(),
+        });
+      }
       
-      toast.success(isScheduling ? 'Content scheduled successfully!' : 'Content saved as draft!');
+      toast.success(isScheduling ? 'Content scheduled successfully!' : 'Content posted successfully!');
       navigate('/calendar');
-    } catch (error) {
-      toast.error('Failed to save content. Please try again.');
+    } catch (error: any) {
+      console.error('Error creating content:', error);
+      toast.error(error.message || 'Failed to save content');
+    } finally {
+      setIsPosting(false);
     }
   };
   
@@ -372,10 +395,10 @@ const ContentUploader: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              isLoading={loading}
+              isLoading={loading || isPosting}
               leftIcon={isScheduling ? <Calendar size={18} /> : <Upload size={18} />}
             >
-              {isScheduling ? 'Schedule Post' : 'Save Draft'}
+              {isScheduling ? 'Schedule Post' : 'Post Now'}
             </Button>
           </div>
         </form>

@@ -4,6 +4,8 @@ export type Platform = 'facebook' | 'instagram' | 'youtube' | 'tiktok';
 
 export type ContentType = 'video' | 'image' | 'text';
 
+export type PostStatus = 'draft' | 'scheduled' | 'posted' | 'failed';
+
 export interface User {
   id: string;
   email: string;
@@ -31,7 +33,7 @@ export interface Content {
   mediaUrl?: string;
   thumbnailUrl?: string;
   platforms: Platform[];
-  status: 'draft' | 'scheduled' | 'posted' | 'failed';
+  status: PostStatus;
   scheduledFor?: string;
   postedAt?: string;
   authorId: string;
@@ -40,6 +42,7 @@ export interface Content {
   hashtags: string[];
   createdAt: string;
   updatedAt: string;
+  postIds?: Record<Platform, string>;
 }
 
 export interface Campaign {
@@ -61,4 +64,15 @@ export interface Template {
   defaultHashtags: string[];
   churchId: string;
   createdAt: string;
+}
+
+export interface SocialAccount {
+  id: string;
+  userId: string;
+  platform: Platform;
+  accessToken: string;
+  refreshToken?: string;
+  pages?: any[];
+  connectedAt: string;
+  expiresAt?: string;
 }

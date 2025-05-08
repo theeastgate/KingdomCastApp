@@ -24,8 +24,8 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { data, error } = await supabase
         .from('contents')
         .select('*')
-        .eq('churchId', churchId)
-        .order('scheduledFor', { ascending: true });
+        .eq('church_id', churchId)
+        .order('scheduled_for', { ascending: true });
         
       if (error) throw error;
       
@@ -42,9 +42,18 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { error } = await supabase
         .from('contents')
         .insert({
-          ...content,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          title: content.title,
+          description: content.description,
+          content_type: content.contentType,
+          media_url: content.mediaUrl,
+          platforms: content.platforms,
+          status: content.status,
+          scheduled_for: content.scheduledFor,
+          author_id: content.authorId,
+          church_id: content.churchId,
+          hashtags: content.hashtags,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
         
       if (error) throw error;
@@ -54,6 +63,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
     } catch (error: any) {
       console.error('Error creating content:', error);
       set({ error: error.message, loading: false });
+      throw error;
     }
   },
 
@@ -63,8 +73,15 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { error } = await supabase
         .from('contents')
         .update({
-          ...content,
-          updatedAt: new Date().toISOString(),
+          title: content.title,
+          description: content.description,
+          content_type: content.contentType,
+          media_url: content.mediaUrl,
+          platforms: content.platforms,
+          status: content.status,
+          scheduled_for: content.scheduledFor,
+          hashtags: content.hashtags,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id);
         
@@ -79,6 +96,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
     } catch (error: any) {
       console.error('Error updating content:', error);
       set({ error: error.message, loading: false });
+      throw error;
     }
   },
 
@@ -98,6 +116,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
     } catch (error: any) {
       console.error('Error deleting content:', error);
       set({ error: error.message, loading: false });
+      throw error;
     }
   },
 
@@ -107,9 +126,9 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { error } = await supabase
         .from('contents')
         .update({
-          scheduledFor,
+          scheduled_for: scheduledFor,
           status: 'scheduled',
-          updatedAt: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id);
         
@@ -126,6 +145,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
     } catch (error: any) {
       console.error('Error scheduling content:', error);
       set({ error: error.message, loading: false });
+      throw error;
     }
   },
 }));
