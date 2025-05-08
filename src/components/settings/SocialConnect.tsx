@@ -126,13 +126,25 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
           if (!import.meta.env.VITE_YOUTUBE_CLIENT_ID) {
             throw new Error('YouTube Client ID not configured');
           }
-          const ytScope = 'https://www.googleapis.com/auth/youtube.upload';
+          // Updated YouTube scopes
+          const ytScope = [
+            'https://www.googleapis.com/auth/youtube',
+            'https://www.googleapis.com/auth/youtube.upload',
+            'https://www.googleapis.com/auth/youtube.readonly',
+            'https://www.googleapis.com/auth/youtube.force-ssl',
+            'https://www.googleapis.com/auth/youtube.channel-memberships.creator',
+            'https://www.googleapis.com/auth/youtubepartner',
+            'https://www.googleapis.com/auth/youtubepartner-channel-audit'
+          ].join(' ');
+          
           authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${import.meta.env.VITE_YOUTUBE_CLIENT_ID}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
             `scope=${encodeURIComponent(ytScope)}&` +
             `response_type=code&` +
             `access_type=offline&` +
+            `include_granted_scopes=true&` +
+            `prompt=consent&` +
             `state=${state}`;
           break;
 
