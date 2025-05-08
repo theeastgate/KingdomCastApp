@@ -114,8 +114,13 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
           if (!import.meta.env.VITE_FACEBOOK_APP_ID) {
             throw new Error('Facebook App ID not configured');
           }
-          // Updated Facebook permissions to include all required scopes
-          const fbScope = 'pages_manage_posts,pages_read_engagement,publish_to_groups';
+          // Updated Facebook permissions to only include valid page management scopes
+          const fbScope = [
+            'pages_show_list',
+            'pages_read_engagement',
+            'pages_manage_posts'
+          ].join(',');
+
           authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
             `client_id=${import.meta.env.VITE_FACEBOOK_APP_ID}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
