@@ -104,8 +104,8 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
       const state = `${platform}_${Math.random().toString(36).substring(7)}`;
       localStorage.setItem(`${platform}_oauth_state`, state);
 
-      // Use the Netlify domain for redirect URI
-      const redirectUri = 'https://magical-otter-6d992a.netlify.app/settings';
+      // Use the current origin for the redirect URI
+      const redirectUri = `${window.location.origin}/settings?platform=${platform}`;
       
       let authUrl = '';
 
