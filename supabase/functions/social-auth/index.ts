@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.39.7";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-user-id",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-user-id, Origin",
 };
 
 const FACEBOOK_APP_ID = Deno.env.get("FACEBOOK_APP_ID");
@@ -54,6 +54,7 @@ serve(async (req) => {
     const pathParts = url.pathname.split("/");
     const platform = pathParts[pathParts.length - 1];
     const userId = req.headers.get("x-user-id");
+    const origin = req.headers.get("Origin") || "https://magical-otter-6d992a.netlify.app";
 
     if (!userId) {
       return new Response(
@@ -87,7 +88,7 @@ serve(async (req) => {
     }
 
     let accessToken, refreshToken, expiresAt, pages;
-    const redirectUri = 'https://magical-otter-6d992a.netlify.app/settings';
+    const redirectUri = `${origin}/settings?platform=${platform.replace("-auth", "")}`;
 
     switch (platform) {
       case "facebook-auth":
