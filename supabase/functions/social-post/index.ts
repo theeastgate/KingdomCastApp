@@ -74,8 +74,24 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Error in social-post function:", error);
+    
+    // Enhanced error handling for Facebook API errors
+    let errorMessage = error.message;
+    if (error.response) {
+      try {
+        const fbError = await error.response.json();
+        errorMessage = fbError.error?.message || error.message;
+      } catch (_) {
+        // If parsing fails, use the original error message
+      }
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: error.response ? await error.response.text() : undefined
+      }),
       {
         status: 500,
         headers: {
@@ -103,6 +119,7 @@ async function postToFacebook(message: string, mediaUrl: string | undefined, acc
 
   if (!response.ok) {
     const error = await response.json();
+    console.error("Facebook API error:", error);
     throw new Error(error.error?.message || "Failed to post to Facebook");
   }
 

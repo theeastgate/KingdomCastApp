@@ -114,7 +114,8 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
           if (!import.meta.env.VITE_FACEBOOK_APP_ID) {
             throw new Error('Facebook App ID not configured');
           }
-          const fbScope = 'pages_manage_posts,pages_read_engagement';
+          // Updated Facebook permissions to include all required scopes
+          const fbScope = 'pages_manage_posts,pages_read_engagement,publish_to_groups';
           authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
             `client_id=${import.meta.env.VITE_FACEBOOK_APP_ID}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
@@ -122,20 +123,18 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
             `state=${state}`;
           break;
 
-          case 'instagram':
-  if (!import.meta.env.VITE_INSTAGRAM_CLIENT_ID) {
-    throw new Error('Instagram Client ID not configured');
-  }
-  // Update the scopes for Instagram Basic Display API
-  const igScope = 'basic';
-  authUrl = `https://api.instagram.com/oauth/authorize?` +
-    `client_id=${import.meta.env.VITE_INSTAGRAM_CLIENT_ID}&` +
-    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-    `scope=${encodeURIComponent(igScope)}&` +
-    `response_type=code&` +
-    `state=${state}`;
-  break;
-          
+        case 'instagram':
+          if (!import.meta.env.VITE_INSTAGRAM_CLIENT_ID) {
+            throw new Error('Instagram Client ID not configured');
+          }
+          const igScope = 'instagram_basic,instagram_content_publish';
+          authUrl = `https://api.instagram.com/oauth/authorize?` +
+            `client_id=${import.meta.env.VITE_INSTAGRAM_CLIENT_ID}&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `scope=${encodeURIComponent(igScope)}&` +
+            `response_type=code&` +
+            `state=${state}`;
+          break;
 
         case 'youtube':
           if (!import.meta.env.VITE_YOUTUBE_CLIENT_ID) {

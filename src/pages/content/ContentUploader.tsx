@@ -109,15 +109,37 @@ const ContentUploader: React.FC = () => {
 
       // If not scheduling, post immediately to social media
       if (!isScheduling) {
-        await postToSocialMedia({
-          message: description || title,
-          mediaUrl,
-          platforms,
-          scheduledFor: scheduledFor?.toISOString(),
-        });
+        try {
+          await postToSocialMedia({
+            message: description || title,
+            mediaUrl,
+            platforms,
+            scheduledFor: scheduledFor?.toISOString(),
+          });
+          
+          toast.success('Content posted successfully!');
+        } catch (postError: any) {
+          // Show detailed error message in a more readable format
+          const errorMessage = postError.message.split('\n').map((line: string) => 
+            line.trim()
+          ).join('\n');
+          
+          toast.error(
+            <div className="whitespace-pre-wrap">
+              <strong>Posting Error:</strong>
+              <br />
+              {errorMessage}
+            </div>,
+            { duration: 6000 }
+          );
+          
+          // Still navigate since the content was created
+          toast.success('Content saved as draft');
+        }
+      } else {
+        toast.success('Content scheduled successfully!');
       }
       
-      toast.success(isScheduling ? 'Content scheduled successfully!' : 'Content posted successfully!');
       navigate('/calendar');
     } catch (error: any) {
       console.error('Error creating content:', error);
