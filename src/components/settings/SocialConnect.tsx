@@ -20,6 +20,7 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accountInfo, setAccountInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   useEffect(() => {
     if (isConnected) {
@@ -30,7 +31,10 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
   const fetchAccountInfo = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setDebugInfo('No authenticated user found');
+        return;
+      }
 
       const { data, error } = await supabase
         .from('social_accounts')
@@ -41,12 +45,20 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
 
       if (error) {
         console.error('Error fetching account info:', error);
+        setDebugInfo(`Failed to fetch account info: ${error.message}`);
+        return;
+      }
+      
+      if (!data) {
+        setDebugInfo('No account data found');
         return;
       }
       
       setAccountInfo(data);
-    } catch (err) {
+      setDebugInfo(null);
+    } catch (err: any) {
       console.error('Error fetching account info:', err);
+      setDebugInfo(`Unexpected error: ${err.message}`);
     }
   };
 
@@ -79,10 +91,14 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
   const handleConnect = async () => {
     setLoading(true);
     setError(null);
+    setDebugInfo(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) {
+        setDebugInfo('No authenticated user found during connect');
+        throw new Error('Not authenticated');
+      }
 
       // Generate and store state parameter
       const state = `${platform}_${Math.random().toString(36).substring(7)}`;
@@ -95,6 +111,9 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
 
       switch (platform) {
         case 'facebook':
+          if (!import.meta.env.VITE_FACEBOOK_APP_ID) {
+            throw new Error('Facebook App ID not configured');
+          }
           const fbScope = 'pages_manage_posts,pages_read_engagement';
           authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
             `client_id=${import.meta.env.VITE_FACEBOOK_APP_ID}&` +
@@ -104,6 +123,9 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
           break;
 
         case 'youtube':
+          if (!import.meta.env.VITE_YOUTUBE_CLIENT_ID) {
+            throw new Error('YouTube Client ID not configured');
+          }
           const ytScope = 'https://www.googleapis.com/auth/youtube.upload';
           authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${import.meta.env.VITE_YOUTUBE_CLIENT_ID}&` +
@@ -118,10 +140,19 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
           throw new Error('Platform not supported yet');
       }
 
+      // Log the redirect URI for debugging
+      console.log(`Redirecting to: ${platform} OAuth`, {
+        redirectUri,
+        platform,
+        state
+      });
+
       window.location.href = authUrl;
     } catch (err: any) {
-      setError(err.message);
-      toast.error('Failed to connect account');
+      const errorMessage = err.message || 'Failed to connect account';
+      setError(errorMessage);
+      setDebugInfo(`Connection error: ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -130,10 +161,14 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
   const handleDisconnect = async () => {
     setLoading(true);
     setError(null);
+    setDebugInfo(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) {
+        setDebugInfo('No authenticated user found during disconnect');
+        throw new Error('Not authenticated');
+      }
       
       const { error } = await supabase
         .from('social_accounts')
@@ -141,14 +176,19 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
         .eq('platform', platform)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        setDebugInfo(`Database error during disconnect: ${error.message}`);
+        throw error;
+      }
 
       setAccountInfo(null);
       onDisconnect();
       toast.success(`Disconnected ${platform} account`);
     } catch (err: any) {
-      setError(err.message);
-      toast.error('Failed to disconnect account');
+      const errorMessage = err.message || 'Failed to disconnect account';
+      setError(errorMessage);
+      setDebugInfo(`Disconnect error: ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -171,6 +211,9 @@ const SocialConnect: React.FC<SocialConnectProps> = ({
             <p className="text-sm opacity-75">
               {isConnected ? `Connected as: ${getAccountName()}` : 'Not connected'}
             </p>
+            {debugInfo && (
+              <p className="text-xs text-gray-500 mt-1">Debug: {debugInfo}</p>
+            )}
           </div>
         </div>
 
